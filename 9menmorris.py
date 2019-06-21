@@ -35,6 +35,8 @@ class MyPanel(wx.Panel):
         self.white = []
         self.pullIndex = 0
         self.hit = 0 #if 0 - mouse did not press any circle
+        self.saveX = 0
+        self.saveY = 0
 
 
         dc = wx.MemoryDC() #when drawing not in OnPaint, use MemoryDC
@@ -208,8 +210,6 @@ class MyPanel(wx.Panel):
             else: 
                 pass 
 
-
-
             self.drawSmallCircle()
             self.drawCircle() 
             self.Refresh() 
@@ -220,20 +220,34 @@ class MyPanel(wx.Panel):
         
 
     def MouseUp(self, e): 
-        self.d = 0 
-        self.hit = 0
-        x, y = e.GetPosition() 
-        print(x,y) #this print the position of circle afterrelease the mouse - it can be white or black. depend which one you drag
-        coin = graph.findHit(x,y)
-        if coin != 100:
-            val = graph.checkCoinInNode(coin)
-            if val == True:
-                # do not drop the coin on other coin 
-                return
-            graph.setCoinInNode(coin, Color.BLACK)
-            msg = "put "+ coin[1:]
-            print(msg)
-            comm.out_q.put(msg)
+        if self.d == 1 and self.hit == 1:  #move circle only when mouse is press
+            self.d = 0 
+            self.hit = 0
+            x, y = e.GetPosition() 
+            print("545", x,y) #this print the position of circle afterrelease the mouse - it can be white or black. depend which one you drag
+            coin = graph.findHit(x,y)
+            if coin != 100:
+                val = graph.checkCoinInNode(coin)
+                if val == True:
+                    # do not drop the coin on other coin 
+                    return
+                graph.setCoinInNode(coin, Color.BLACK)
+                msg = "put "+ coin[1:]
+                print(msg)
+                comm.out_q.put(msg)
+            else:
+                #the coin was put in illegal place, take it to the place it begin to  drag
+                print("return to beginning {0} {1} {2}".format(self.j , self.saveX, self.saveY))
+                if self.t == Color.BLACK: 
+                    self.black[self.j][0] = self.saveX 
+                    self.black[self.j][1] = self.saveY
+                elif self.t == Color.WHITE: 
+                    self.white[self.j][0] = self.saveX 
+                    self.white[self.j][1] = self.saveY 
+                self.drawSmallCircle()
+                self.drawCircle() 
+                self.Refresh() 
+                self.InitBuffer()
 
     def MouseDown(self, e): 
         self.d = 1 
@@ -248,16 +262,21 @@ class MyPanel(wx.Panel):
             y_b = abs(self.black[i][1]-abs(y))//self.r 
             #print("\n333",x_w,y_w,x_b, y_b)
 
-            if x_w == 0 and y_w == 0: 
+            # we check if my_color == something to disable from user to drag and drop otherside coins
+            if x_w == 0 and y_w == 0 and my_color ==  Color.WHITE: 
                     self.j = i #find which coin from 0 to 8 was press
                     self.t = Color.WHITE 
                     self.hit = 1
-                    print("111", self.j, self.t)
-            elif x_b == 0 and y_b == 0: 
+                    self.saveX = self.white[i][0]
+                    self.saveY = self.white[i][1] 
+                    print("111", self.j, self.t , self.saveX, self.saveY)
+            elif x_b == 0 and y_b == 0 and my_color ==  Color.BLACK: 
                     self.j = i #find which coin from 0 to 8 was press
                     self.t = Color.BLACK
                     self.hit = 1
-                    print("222", self.j, self.t)
+                    self.saveX = self.black[i][0]
+                    self.saveY = self.black[i][1] 
+                    print("222", self.j, self.t , self.saveX, self.saveY)
             else: 
                 pass 
         
