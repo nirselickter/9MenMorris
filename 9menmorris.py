@@ -461,26 +461,40 @@ class MyPanel(wx.Panel):
         
 class MainFrame(wx.Frame):
     def __init__(self):
+        #wx.Frame.__init__(self, None, title="9 Men Morris", size=(700,700))
+        #panel = MyPanel(self,-1)
+        
         wx.Frame.__init__(self, None, title="9 Men Morris", size=(900,900))
         self.createWidgets()
-    
+        
+        
         main = wx.BoxSizer(wx.VERTICAL)
+        
         row = wx.BoxSizer(wx.HORIZONTAL)   
         row1 = wx.BoxSizer(wx.HORIZONTAL)
+
+        
         col1 = wx.BoxSizer(wx.VERTICAL)
         col2 = wx.BoxSizer(wx.VERTICAL)
+
         sidePanel = StamPanel(self, mysize=(200,700))
         gamePanel = MyPanel(self, -1,mysize=(700,700))
         chatPanel = StamPanel(self, mysize=(900,200))
+
+
         col1.Add(sidePanel)
         col2.Add(gamePanel)
+        
         row.Add(col1)
         row.Add(col2)
+
         row1.Add(chatPanel)
+        
         main.Add(row)
         main.Add(row1)
      
         self.SetSizer(main)     
+        
         self.Show()
         
     def createWidgets(self):   
@@ -490,12 +504,17 @@ class MainFrame(wx.Frame):
         
     def createMenu(self):      
         menu= wx.Menu()
-        menu.Append(wx.ID_NEW, "New", "Create something new")
+        printGraph = menu.Append(wx.ID_NEW, "Print Graph", "Create something new")
+        self.Bind(wx.EVT_MENU, self.printGraph, printGraph)
+        
         menu.AppendSeparator()
+        
         _exit = menu.Append(wx.ID_EXIT, "Exit", "Exit the GUI")
         self.Bind(wx.EVT_MENU, self.exitGUI, _exit)
+        
         menuBar = wx.MenuBar()
         menuBar.Append(menu, "File")   
+        
         menu1= wx.Menu()    
         menu1.Append(wx.ID_ABOUT, "About", "wxPython GUI")
         menuBar.Append(menu1, "Help")     
@@ -504,7 +523,8 @@ class MainFrame(wx.Frame):
     def exitGUI(self, event):       # callback
         self.Destroy()
 
-
+    def printGraph(self, event):    # callback
+        graph.printGraph("debug")
 
 def main():
     app = wx.App() 
