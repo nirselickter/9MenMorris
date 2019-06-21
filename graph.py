@@ -58,7 +58,7 @@ def checkMill(color):
             if mill[0] == mill[1] and mill[1] == mill[2] and mill[2] == color :
                 tmp.append(i) #we build list of all mills of color.
                 print("we got mill", i, mill )    
-    print("333",len(tmp))
+    #print("333",len(tmp))
     return len(tmp)
 
 

@@ -44,7 +44,11 @@ class ChatPanel(wx.Panel):
         
         main = wx.BoxSizer(wx.HORIZONTAL)
         
-        self.lbl = wx.StaticText(self, label="Here we write messages:")
+        msg = "your turn"
+        if server == True:
+            msg = "other side turn"
+        
+        self.lbl = wx.StaticText(self, label=msg)
         font = wx.Font(18, wx.MODERN, wx.ITALIC, wx.NORMAL)
         self.lbl.SetFont(font)
         main.Add(self.lbl ) 
@@ -228,12 +232,6 @@ class MyPanel(wx.Panel):
                     self.white[coin][0] = x
                     self.white[coin][1] = y
                 
-                if server == True :
-                    self.turn = GAME_TURN.SERVER_TURN
-                    print("you are server and now you got the turn")
-                elif server == False:
-                    self.turn = GAME_TURN.CLIENT_TURN
-                    print("you are client and now you got the turn")
                     
                 #for debug
                 val = graph.getGraphDb()
@@ -290,6 +288,16 @@ class MyPanel(wx.Panel):
              graph.compareDb(tmp)
              #print("111111111111111111111111")
              #print(tmp)
+        if tmp == "your turn":
+            pub.sendMessage("message2", msg="your turn")
+            if server == True :
+                self.turn = GAME_TURN.SERVER_TURN
+                print("you are server and now you got the turn")
+            elif server == False:
+                self.turn = GAME_TURN.CLIENT_TURN
+                print("you are client and now you got the turn")
+        if tmp == "mill":
+            pub.sendMessage("message2", msg="your rival got mill, please wait")
 
 
     def MouseMove(self, e): 
@@ -332,9 +340,6 @@ class MyPanel(wx.Panel):
         self.InitBuffer()
 
     def MouseUp(self, e):
-
-
-
 
         if self.d == 1 and self.hit == 1:  #move circle only when mouse is press
             self.d = 0 
@@ -395,23 +400,29 @@ class MyPanel(wx.Panel):
             #print("wx send to remote" + msg)
             comm.out_q.put(msg)
             
+                            
             # we check if number of mills in this step is larger than previous step
-            # if it is, it is possible to take coin of your rival
+            # if it is, it is necessary to take coin of your rival
+            # you got the turn until you take coin of your rival
             nmbOfMills  = graph.checkMill(my_color)
             if nmbOfMills > self.nmbOfMills:
-                print("\n>>>>>new mill, you can take coin from your rival" )
+                print("\n>>>>>new mill, you need to take coin from your rival" )
                 self.WeGotMill = True
                 pub.sendMessage("message2", msg="new mill, you can take coin from your rival")
+                comm.out_q.put("mill")
             else:              
                 self.WeGotMill = False
             self.nmbOfMills = nmbOfMills
             
-            if server == True :
-                self.turn = GAME_TURN.CLIENT_TURN
-                print("You are server and the turn change to client")
-            elif server == False:
-                self.turn = GAME_TURN.SERVER_TURN
-                print("You are client and the turn change to server")
+            if self.WeGotMill == False:
+                pub.sendMessage("message2", msg="other side turn")
+                comm.out_q.put("your turn")
+                if server == True :
+                    self.turn = GAME_TURN.CLIENT_TURN
+                    print("You are server and the turn change to client")
+                elif server == False:
+                    self.turn = GAME_TURN.SERVER_TURN
+                    print("You are client and the turn change to server")
 
                
             
@@ -445,7 +456,8 @@ class MyPanel(wx.Panel):
             #print("\n333",x_w,y_w,x_b, y_b)
 
             # we check if my_color == something to disable from user to drag and drop otherside coins
-            if x_w == 0 and y_w == 0 and my_color ==  Color.WHITE: 
+            # if we got mill, the only thing that we can do is press on a coin of the rival
+            if x_w == 0 and y_w == 0 and my_color ==  Color.WHITE and self.WeGotMill == False: 
                     self.j = i #find which coin from 0 to 8 was press
                     self.t = Color.WHITE 
                     self.hit = 1
@@ -453,7 +465,7 @@ class MyPanel(wx.Panel):
                     self.saveY = self.white[i][1] 
                     self.saveStation = graph.findHit(self.saveX,self.saveY) #if i game starting ,selfStation will be g100
                     #print("mouseDown white", self.j, self.t , self.saveX, self.saveY , self.saveStation)
-            elif x_b == 0 and y_b == 0 and my_color ==  Color.BLACK: 
+            elif x_b == 0 and y_b == 0 and my_color ==  Color.BLACK and self.WeGotMill == False: 
                     self.j = i #find which coin from 0 to 8 was press
                     self.t = Color.BLACK
                     self.hit = 1
@@ -477,6 +489,15 @@ class MyPanel(wx.Panel):
                     msg = "take "+ str(coin) + " " + station
                     #print("wx send to remote" + msg)
                     comm.out_q.put(msg)
+              
+                    pub.sendMessage("message2", msg="other side turn")
+                    if server == True :
+                        self.turn = GAME_TURN.CLIENT_TURN
+                        print("You are server and the turn change to client")
+                    elif server == False:
+                        self.turn = GAME_TURN.SERVER_TURN
+                        print("You are client and the turn change to server")
+                    comm.out_q.put("your turn")                   
                     
             elif x_b == 0 and y_b == 0 and my_color ==  Color.WHITE and self.WeGotMill == True: 
                     #print("You take black from rival")
@@ -493,6 +514,16 @@ class MyPanel(wx.Panel):
                     msg = "take "+ str(coin)  + " " + station
                     #print("wx send to remote" + msg)
                     comm.out_q.put(msg)
+
+                    pub.sendMessage("message2", msg="other side turn")
+                    if server == True :
+                        self.turn = GAME_TURN.CLIENT_TURN
+                        print("You are server and the turn change to client")
+                    elif server == False:
+                        self.turn = GAME_TURN.SERVER_TURN
+                        print("You are client and the turn change to server")
+                    comm.out_q.put("your turn")
+
             else: 
                 pass 
         
