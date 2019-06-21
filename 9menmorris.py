@@ -24,7 +24,7 @@ class GAME_TURN(Enum):
     CLIENT_TURN = 0
     SERVER_TURN = 1
 
-
+NMB_OF_COINS = 3
 
 flag = 0
 
@@ -47,7 +47,7 @@ class MyPanel(wx.Panel):
         self.hit = 0 #if 0 - mouse did not press any circle
         self.saveX = 0
         self.saveY = 0
-        self.saveStation = 100
+        self.saveStation = "g100"
         self.state = GAME_STATE.START
         self.nmbOfCoinsOnBoard = 0
         self.turn = GAME_TURN.CLIENT_TURN
@@ -72,12 +72,29 @@ class MyPanel(wx.Panel):
         self.Bind(wx.EVT_LEFT_UP, self.MouseUp) 
         self.Bind(wx.EVT_MOTION, self.MouseMove) 
 
+
+    def InitBuffer(self): 
+        size=self.GetClientSize() 
+        self.Buffer = wx.Bitmap(size.width,size.height) 
+        self.dc = wx.MemoryDC() 
+        self.dc.SelectObject(self.Buffer) 
+
+
+        
+    def OnPaint(self, evt): 
+        self.InitBuffer() 
+        self.dc = wx.PaintDC(self) #when drawing in OnPaint, use PaintDC      
+        self.drawBoard(self.dc)
+        self.drawSmallCircle()
+        self.drawCircle() 
+
+
     def initCircles(self, dc):
         brush = wx.Brush("white")  
         dc.SetBrush(brush) 
         x = 50
         y = 100
-        for i in range(9):
+        for i in range(NMB_OF_COINS):
             tmp = [x,y]
             self.white.append(tmp);
             dc.DrawCircle(x,y,30) 
@@ -87,7 +104,7 @@ class MyPanel(wx.Panel):
         dc.SetBrush(brush) 
         x = 650
         y = 100
-        for i in range(9):
+        for i in range(NMB_OF_COINS):
             tmp = [x,y]
             self.black.append(tmp);
             dc.DrawCircle(x,y,30) 
@@ -106,11 +123,11 @@ class MyPanel(wx.Panel):
 
     def drawCircle(self): 
         self.dc.SetBrush(wx.Brush("white", wx.SOLID)) 
-        for i in range(9): 
+        for i in range(NMB_OF_COINS): 
             self.dc.DrawCircle(self.white[i][0], self.white[i][1], self.r) 
             
         self.dc.SetBrush(wx.Brush("black", wx.SOLID))             
-        for i in range(9): 
+        for i in range(NMB_OF_COINS): 
             self.dc.DrawCircle(self.black[i][0], self.black[i][1], self.r) 
 
     def drawBoard(self,dc):
@@ -149,13 +166,17 @@ class MyPanel(wx.Panel):
         tmp = t[len("server response")+1:]
         info = tmp.split(" ")
         print("145", tmp, info)
-        if len(info) == 3:
+        if len(info) == 4:
             if info[0] == "put":
                 coin = int(info[1])
-                nmb1 = int(info[2])
+                nmb  = int(info[2])
+                nmb1 = int(info[3])
+                prvStation = "g"+str(nmb)
                 station = "g"+str(nmb1)
                                                
                 x,y = graph.getStationXY(station)
+                if prvStation != "g100":
+                    graph.clearCoinInNode(prvStation)     
                 graph.setCoinInNode(station, other_color)
                 print("iuy", station, x, y)
                 if (other_color == Color.BLACK):
@@ -181,20 +202,6 @@ class MyPanel(wx.Panel):
                 self.Show()
 
 
-    def InitBuffer(self): 
-        size=self.GetClientSize() 
-        self.Buffer = wx.Bitmap(size.width,size.height) 
-        self.dc = wx.MemoryDC() 
-        self.dc.SelectObject(self.Buffer) 
-
-
-        
-    def OnPaint(self, evt): 
-        self.InitBuffer() 
-        self.dc = wx.PaintDC(self) #when drawing in OnPaint, use PaintDC      
-        self.drawBoard(self.dc)
-        self.drawSmallCircle()
-        self.drawCircle() 
 
 
 
@@ -248,35 +255,52 @@ class MyPanel(wx.Panel):
             x, y = e.GetPosition() 
             print("545", x,y) #this print the position of circle afterrelease the mouse - it can be white or black. depend which one you drag
             station = graph.findHit(x,y)
-            if station != 100:
-                val = graph.checkCoinInNode(station)
-                if val == True:
-                    # do not drop the coin on other coin 
-                    self.returnTheCoinBack(1) 
+            if station == "g100":
+                # the coin was not dropped on one of 24 stations
+                self.returnTheCoinBack(2) 
+                return
+            val = graph.checkCoinInNode(station)
+            if val == True:
+                # do not drop the coin on other coin 
+                self.returnTheCoinBack(1) 
+                graph.printNodeValue(station)
+                return
+
+            if self.state == GAME_STATE.MIDDLE:
+                val = graph.checkIfConnect(self.saveStation, station)
+                if val == False:
+                    # user try to drop the coin not in a neighbour station
+                    graph.printNodeValue(self.saveStation)
+                    graph.printNodeValue(station)
+                    self.returnTheCoinBack(4) 
                     return
-                if self.saveStation != 100 and self.state == GAME_STATE.START:
+                
+            if self.state == GAME_STATE.START:
+                if self.saveStation != "g100" :
                     # user try to move coin from station in the start state. this is prohibited
                     # in the start state, it is possible just to put coins on the board
                     self.returnTheCoinBack(3) 
                     return
-                if self.state == GAME_STATE.START:
-                    self.nmbOfCoinsOnBoard =self.nmbOfCoinsOnBoard + 1
-                    if self.nmbOfCoinsOnBoard == 9:
-                        print("9u9","change state to middle")
-                        self.state = GAME_STATE.MIDDLE
-                graph.setCoinInNode(station, my_color)
-                msg = "put "+ str(self.j) +" " +  station[1:]
-                print("232 " + msg)
-                comm.out_q.put(msg)
-                if server == True :
-                    self.turn = GAME_TURN.CLIENT_TURN
-                    print("4w3", "you are server and the turn change to client")
-                elif server == False:
-                    self.turn = GAME_TURN.SERVER_TURN
-                    print("4w3", "you are client and the turn change to server")
-            else:
-                # the coin was not dropped on one of 24 stations
-                self.returnTheCoinBack(2) 
+
+                self.nmbOfCoinsOnBoard =self.nmbOfCoinsOnBoard + 1
+                if self.nmbOfCoinsOnBoard == NMB_OF_COINS:
+                    print("9u9","change state to middle")
+                    self.state = GAME_STATE.MIDDLE
+           
+            if self.saveStation != "g100":
+                graph.clearCoinInNode(self.saveStation)      
+            graph.setCoinInNode(station, my_color)
+            msg = "put "+ str(self.j) +" " + self.saveStation[1:] +" " + station[1:]
+            print("232 " + msg)
+            comm.out_q.put(msg)
+            if server == True :
+                self.turn = GAME_TURN.CLIENT_TURN
+                print("4w3", "you are server and the turn change to client")
+            elif server == False:
+                self.turn = GAME_TURN.SERVER_TURN
+                print("4w3", "you are client and the turn change to server")
+
+               
             
 
     def MouseDown(self, e): 
@@ -297,7 +321,7 @@ class MyPanel(wx.Panel):
 
         x, y = e.GetPosition() 
         
-        for i in range(9): 
+        for i in range(NMB_OF_COINS): 
             x_w = abs(self.white[i][0]-abs(x))//self.r 
             y_w = abs(self.white[i][1]-abs(y))//self.r 
             
@@ -312,7 +336,7 @@ class MyPanel(wx.Panel):
                     self.hit = 1
                     self.saveX = self.white[i][0]
                     self.saveY = self.white[i][1] 
-                    self.saveStation = graph.findHit(self.saveX,self.saveY)
+                    self.saveStation = graph.findHit(self.saveX,self.saveY) #if i game starting ,selfStation will be g100
                     print("111", self.j, self.t , self.saveX, self.saveY , self.saveStation)
             elif x_b == 0 and y_b == 0 and my_color ==  Color.BLACK: 
                     self.j = i #find which coin from 0 to 8 was press

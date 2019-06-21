@@ -49,10 +49,10 @@ def findHit(x,y):
             print (key)
             return key
      #if we are here we did not find hit - the coin is not at one of 24 stations
-     return 100
+     return "g100"
 
 def printNodeValue(node1):
-    print(graph[node1])
+    print("777", str(node1), graph[node1])
 
 #check if there is already some coin in node1
 def checkCoinInNode(node1):
