@@ -25,7 +25,8 @@ class GAME_TURN(Enum):
     CLIENT_TURN = 0
     SERVER_TURN = 1
 
-NMB_OF_COINS = 5
+#when debug, change it to 3 , 5. the tests are faster
+NMB_OF_COINS = 9
 
 flag = 0
 
@@ -51,9 +52,10 @@ class MyPanel(wx.Panel):
         self.saveStation = "g100"
         self.state = GAME_STATE.START
         self.nmbOfCoinsOnBoard = 0
+        self.nmbOfCoinsPlaced = 0
         self.turn = GAME_TURN.CLIENT_TURN
         self.WeGotMill = False
-        self.lastMill = 0
+        self.nmbOfMills = 0
 
         dc = wx.MemoryDC() #when drawing not in OnPaint, use MemoryDC
         self.initCircles(dc)
@@ -223,6 +225,12 @@ class MyPanel(wx.Panel):
                     self.white[coin][1] = 600
                 graph.clearCoinInNode(station)
                 
+                self.nmbOfCoinsOnBoard = self.nmbOfCoinsOnBoard - 1
+                if self.state == GAME_STATE.MIDDLE and self.nmbOfCoinsOnBoard == 3:
+                    print("change state to end game")
+                    self.state = GAME_STATE.END
+                
+                
                 #for debug
                 val = graph.getGraphDb()
                 val = pickle.dumps(val)
@@ -320,9 +328,10 @@ class MyPanel(wx.Panel):
                     self.returnTheCoinBack(3) 
                     return
 
-                self.nmbOfCoinsOnBoard =self.nmbOfCoinsOnBoard + 1
-                if self.nmbOfCoinsOnBoard == NMB_OF_COINS:
-                    #print("change state to middle")
+                self.nmbOfCoinsOnBoard = self.nmbOfCoinsOnBoard + 1
+                self.nmbOfCoinsPlaced  = self.nmbOfCoinsPlaced + 1
+                if self.nmbOfCoinsPlaced == NMB_OF_COINS:
+                    print("change state to middle")
                     self.state = GAME_STATE.MIDDLE
            
             if self.saveStation != "g100":
@@ -344,14 +353,17 @@ class MyPanel(wx.Panel):
             msg = "put "+ str(self.j) +" " + self.saveStation[1:] +" " + station[1:]
             #print("wx send to remote" + msg)
             comm.out_q.put(msg)
-            mill  = graph.checkMill(my_color)
-            if len(mill) >= 1 and mill != self.lastMill:
-                print(">>>new mill, you can take coin from your rival")
+            
+            # we check if number of mills in this step is larger than previous step
+            # if it is, it is possible to take coin of your rival
+            nmbOfMills  = graph.checkMill(my_color)
+            if nmbOfMills > self.nmbOfMills:
+                print("\n>>>>>new mill, you can take coin from your rival" )
                 self.WeGotMill = True
-                self.lastMill = mill
-            else:
+            else:              
                 self.WeGotMill = False
-                self.lastMill = 0
+            self.nmbOfMills = nmbOfMills
+            
             if server == True :
                 self.turn = GAME_TURN.CLIENT_TURN
                 print("You are server and the turn change to client")

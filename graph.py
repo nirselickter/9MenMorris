@@ -53,13 +53,13 @@ def checkMill(color):
     tmp=[]
     lst = [r1,r2,r3,r4,r5,r6,r7,r8,l1,l2,l3,l4,l5,l6,l7,l8]
     #print(lst)
-    for i in lst:
-        if len(i) == 3:
-            #print (i)
-            if i[0] == i[1] and i[1] == i[2] and i[2] == color :
+    for i,mill in enumerate(lst):
+        if len(mill) == 3:
+            if mill[0] == mill[1] and mill[1] == mill[2] and mill[2] == color :
                 tmp.append(i) #we build list of all mills of color.
-                #print("we got mill", tmp , len(tmp))    
-    return tmp
+                print("we got mill", i, mill )    
+    print("333",len(tmp))
+    return len(tmp)
 
 
 def compareDb(val):
@@ -69,7 +69,8 @@ def compareDb(val):
             print(graph)
             print(val)
     else:
-         print("the client and server db are sync!!!")
+        pass
+        #print("the client and server db are sync!!!")
     
 
 
