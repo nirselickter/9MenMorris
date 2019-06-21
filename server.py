@@ -83,8 +83,8 @@ def server_recv():
             print ("client accept from {0} at port {1}".format(client_address, port))
             client_socket.settimeout(300)
             continue
-        print ("server got: " + client_info)
         client_info_str = client_info.decode('ascii')
+        print ("server got: " + client_info_str)
         pub.sendMessage("update", msg="server response " +client_info_str)
 
 

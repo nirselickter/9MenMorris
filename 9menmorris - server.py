@@ -1,6 +1,10 @@
-#in this version
-#the client can accept two command put and get and it check if the command are valid
-# the server can handle client exist/reconect
+# in this version the client send command "put 14" and not "4 14 "
+# it means that the server shall manage the coins in some pull 
+# and when got command to put, it shall take from pull.
+# the server also check if the put station is occupy or not
+# it also check if drag/drop station is occupy or not
+#
+
 
 import threading
 import socket
@@ -21,8 +25,6 @@ class Color(Enum):
 flag = 0
 out_q = Queue()
 
-
-
 class MyPanel(wx.Panel): 
     
     def __init__(self, parent, id): 
@@ -35,6 +37,7 @@ class MyPanel(wx.Panel):
         self.d = 0 
         self.black =[]
         self.white = []
+        self.pullIndex = 0
         self.hit = 0 #if 0 - mouse did not press any circle
 
 
@@ -131,22 +134,39 @@ class MyPanel(wx.Panel):
         tmp = t[len("server response")+1:]
         info = tmp.split(" ")
         print(tmp, info)
-        i = int(info[0])
-        nmb = int(info[1])
-        coin = "g"+str(nmb)
-        x,y = graph.getCoinXY(coin)
-        print(coin, x, y)
-        self.black[i][0] = x
-        self.black[i][1] = y
-        
-        
-        self.InitBuffer() 
-        self.dc = wx.ClientDC(self) #when drawing in OnPaint, use PaintDC      
-        self.drawBoard(self.dc)
-        self.drawSmallCircle()
-        self.drawCircle() 
-        self.Hide()
-        self.Show()
+        if len(info) == 2:
+            if info[0] == "put":
+                nmb = int(info[1])
+                coin = "g"+str(nmb)
+                
+                val = graph.checkCoinInNode(coin)
+                if val == True:
+                    print (coin + " station is occupy")
+                    server.out_q.put(coin + " station is occupy")
+                    return
+                    
+                i = self.pullIndex
+                self.pullIndex = self.pullIndex + 1
+                if self.pullIndex == 10:
+                    print ("no more coins")
+                    server.out_q.put("no more coins")
+                    return
+                
+                graph.setCoinInNode(coin, Color.BLACK)
+                
+                x,y = graph.getCoinXY(coin)
+                print(coin, x, y)
+                self.black[i][0] = x
+                self.black[i][1] = y
+                
+                
+                self.InitBuffer() 
+                self.dc = wx.ClientDC(self) #when drawing in OnPaint, use PaintDC      
+                self.drawBoard(self.dc)
+                self.drawSmallCircle()
+                self.drawCircle() 
+                self.Hide()
+                self.Show()
 
 
     def InitBuffer(self): 
@@ -199,10 +219,15 @@ class MyPanel(wx.Panel):
         self.hit = 0
         x, y = e.GetPosition() 
         print(x,y) #this print the position of circle afterrelease the mouse - it can be white or black. depend which one you drag
-        val = graph.findHit(x,y)
-        if val != 100:
-            print("111",val)
-            server.out_q.put(val)
+        coin = graph.findHit(x,y)
+        if coin != 100:
+            val = graph.checkCoinInNode(coin)
+            if val == True:
+                # do not drop the coin on other coin 
+                return
+            graph.setCoinInNode(coin, Color.WHITE)
+            print("111",coin)
+            server.out_q.put(coin)
 
     def MouseDown(self, e): 
         self.d = 1 

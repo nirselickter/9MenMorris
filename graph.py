@@ -30,6 +30,7 @@ graph =  { 'g1': [('g2', 'g10'),[],(100,50)],
     'g24': [('g15', 'g23'),[],(600,550)]
 }
 
+#return tuple of (x,y) of node1
 def getCoinXY(node1):
     #printNodeValue(node1)
     return graph[node1][2]
@@ -52,6 +53,13 @@ def findHit(x,y):
 
 def printNodeValue(node1):
     print(graph[node1])
+
+#check if there is already some coin in node1
+def checkCoinInNode(node1):
+    if len(graph[node1][1]) == 1:
+        return True
+    else:
+        return False
 
 def clearCoinInNode(node1):
     #print ("clearCoinInNode", node1)
