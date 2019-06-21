@@ -39,7 +39,6 @@ class MyPanel(wx.Panel):
         self.d = 0 
         self.black =[]
         self.white = []
-        self.pullIndex = 0
         self.hit = 0 #if 0 - mouse did not press any circle
         self.saveX = 0
         self.saveY = 0
@@ -135,40 +134,28 @@ class MyPanel(wx.Panel):
 
     def updateDisplay(self, msg):
         """
-        Receives data from thread and updates the display
+        Receives update message about move in other side
         """
         global other_color
         t = msg
         tmp = t[len("server response")+1:]
         info = tmp.split(" ")
-        print(tmp, info)
-        if len(info) == 2:
+        print("145", tmp, info)
+        if len(info) == 3:
             if info[0] == "put":
-                nmb = int(info[1])
-                coin = "g"+str(nmb)
-                
-                val = graph.checkCoinInNode(coin)
-                if val == True:
-                    print (coin + " station is occupy")
-                    comm.out_q.put(coin + " station is occupy")
-                    return
-                    
-                i = self.pullIndex
-                self.pullIndex = self.pullIndex + 1
-                if self.pullIndex == 10:
-                    print ("no more coins")
-                    comm.out_q.put("no more coins")
-                    return
-                
-                x,y = graph.getCoinXY(coin)
-                graph.setCoinInNode(coin, other_color)
-                print(coin, x, y)
+                coin = int(info[1])
+                nmb1 = int(info[2])
+                station = "g"+str(nmb1)
+                                               
+                x,y = graph.getCoinXY(station)
+                graph.setCoinInNode(station, other_color)
+                print("iuy", station, x, y)
                 if (other_color == Color.BLACK):
-                    self.black[i][0] = x
-                    self.black[i][1] = y
+                    self.black[coin][0] = x
+                    self.black[coin][1] = y
                 else:
-                    self.white[i][0] = x
-                    self.white[i][1] = y
+                    self.white[coin][0] = x
+                    self.white[coin][1] = y
             
                 
                 
@@ -246,16 +233,16 @@ class MyPanel(wx.Panel):
             self.hit = 0
             x, y = e.GetPosition() 
             print("545", x,y) #this print the position of circle afterrelease the mouse - it can be white or black. depend which one you drag
-            coin = graph.findHit(x,y)
-            if coin != 100:
-                val = graph.checkCoinInNode(coin)
+            station = graph.findHit(x,y)
+            if station != 100:
+                val = graph.checkCoinInNode(station)
                 if val == True:
                     # do not drop the coin on other coin 
                     self.returnTheCoinBack(1) 
                     return
-                graph.setCoinInNode(coin, my_color)
-                msg = "put "+ coin[1:]
-                print(msg)
+                graph.setCoinInNode(station, my_color)
+                msg = "put "+ str(self.j) +" " +  station[1:]
+                print("232" + msg)
                 comm.out_q.put(msg)
             else:
                 # the coin was not dropped on one of 24 stations
