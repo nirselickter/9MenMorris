@@ -23,6 +23,7 @@ import wx
 from threading import Thread
 from wx.lib.pubsub import pub
 import graph 
+import server
 from time import sleep
 from queue import Queue
 
@@ -34,41 +35,6 @@ class Color(Enum):
 flag = 0
 out_q = Queue()
 
-def server_send(client_socket, client_address):
-    print ("server send start")
-    global flag
-    while True:
-        if out_q.empty() == False:
-            data = out_q.get()
-            client_socket.send(data.encode('ascii'))
-        sleep(0.05)
-
-def server_recv():
-    """Run Worker Thread."""
-    print ("server recv start")
-    server_socket = socket.socket()
-    server_socket.bind(('0.0.0.0',8820))
-
-    server_socket.listen(1)
-
-    (client_socket, client_address) = server_socket.accept()
-    print ("client connect")
-
-    sendThread = threading.Thread(target=server_send, args=(client_socket, client_address))
-    sendThread.start()
-
-    while True:
-        client_info = client_socket.recv(1024)
-        client_info_str = client_info.decode('ascii')
-        if client_info_str == "":
-            client_socket.close()
-            server_socket.close()
-            print ("client close the socket")
-            sys.exit()
-        print ("server got: " + client_info_str)
-        pub.sendMessage("update", msg="server response " +client_info_str)
-       
-            
 
 
 class MyPanel(wx.Panel): 
@@ -91,7 +57,7 @@ class MyPanel(wx.Panel):
         self.Buffer = None 
         
         #self.thread = TestThread()
-        recvThread = threading.Thread(target=server_recv, args=())
+        recvThread = threading.Thread(target=server.server_recv, args=())
         recvThread.start()
 
         # create a pubsub receiver
@@ -250,7 +216,7 @@ class MyPanel(wx.Panel):
         val = graph.findHit(x,y)
         if val != 100:
             print("111",val)
-            out_q.put(val)
+            server.out_q.put(val)
 
     def MouseDown(self, e): 
         self.d = 1 
