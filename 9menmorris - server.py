@@ -1,20 +1,6 @@
-#in this code you run the server and then run the client
-# the server has gui(wx) and the client is just console
-# 
-# in the client you run command like 4 14 - it means take coin 4 and put it on station 14 on board
-# this message is send by tcp message to server side port 8820. 
-# in the server there are 3 threads 
-#   wx thread
-#   server rcv messages from client
-#   server send messages to client
-# once the server rcv command from client like 4 14 , it send it to wx thread by pub/sub method
-# and once the wx thread got the info from clinet, it move black coin to station 14
-# then the user move with mouse one of white coins and put it on some station.
-# once the drag/drop method finished, event is create , the code check if the white coin is on 
-# one of 24 stations. if it is there, then wx thread send in QUEUE some message to server_send thread
-# the server_send is wait on out_q for internal messages. once he got it
-# it send message to the client with the number of station that coin was moved
-
+#in this version
+#the client can accept two command put and get and it check if the command are valid
+# the server can handle client exist/reconect
 
 import threading
 import socket

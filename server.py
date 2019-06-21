@@ -37,33 +37,57 @@ out_q = Queue()
 def server_send(client_socket, client_address):
     print ("server send start")
     global flag
-    while True:
+    while flag == 1:
         if out_q.empty() == False:
             data = out_q.get()
             client_socket.send(data.encode('ascii'))
         sleep(0.05)
 
 def server_recv():
-    """Run Worker Thread."""
+    global flag
+    port = 8820
     print ("server recv start")
     server_socket = socket.socket()
-    server_socket.bind(('0.0.0.0',8820))
+    server_socket.bind(('0.0.0.0',port))
 
     server_socket.listen(1)
 
     (client_socket, client_address) = server_socket.accept()
-    print ("client connect")
+    print ("client accept from {0} at port {1}".format(client_address, port))
+    client_socket.settimeout(300)
 
+    flag = 1
     sendThread = threading.Thread(target=server_send, args=(client_socket, client_address))
     sendThread.start()
 
-    while True:
-        client_info = client_socket.recv(1024)
-        client_info_str = client_info.decode('ascii')
-        if client_info_str == "":
+    while(1):
+        try:
+            client_info = client_socket.recv(1024)
+        except Exception as e:
+            flag = 0
+            sleep(0.2) #let the server_send thread to be close
+            print (e)
             client_socket.close()
-            server_socket.close()
+            (client_socket, client_address) = server_socket.accept() #be ready for next client
+            client_socket.settimeout(300)
+            print ("client accept from {0} at port {1}".format(client_address, port))
+            continue
+        # if the code will not check empty string,then once the client terminate,
+        # the server will continusly will get empty string
+        if client_info == "":
+            flag = 0
+            sleep(0.2) #let the server_send thread to be close
+            client_socket.close()
             print ("client close the socket")
-            sys.exit()
-        print ("server got: " + client_info_str)
+            (client_socket, client_address) = server_socket.accept()
+            print ("client accept from {0} at port {1}".format(client_address, port))
+            client_socket.settimeout(300)
+            continue
+        print ("server got: " + client_info)
+        client_info_str = client_info.decode('ascii')
         pub.sendMessage("update", msg="server response " +client_info_str)
+
+
+
+
+    
