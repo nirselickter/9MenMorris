@@ -15,6 +15,12 @@ class Color(Enum):
     BLACK = 0
     WHITE = 1
 
+class GAME_STATE(Enum):
+    START = 0
+    MIDDLE = 1
+    END = 2
+
+
 flag = 0
 
 server = False
@@ -37,7 +43,7 @@ class MyPanel(wx.Panel):
         self.hit = 0 #if 0 - mouse did not press any circle
         self.saveX = 0
         self.saveY = 0
-
+        self.state = GAME_STATE.START
 
         dc = wx.MemoryDC() #when drawing not in OnPaint, use MemoryDC
         self.initCircles(dc)
@@ -155,13 +161,12 @@ class MyPanel(wx.Panel):
                     return
                 
                 x,y = graph.getCoinXY(coin)
+                graph.setCoinInNode(coin, other_color)
                 print(coin, x, y)
                 if (other_color == Color.BLACK):
-                    graph.setCoinInNode(coin, Color.BLACK)
                     self.black[i][0] = x
                     self.black[i][1] = y
                 else:
-                    graph.setCoinInNode(coin, Color.BLACK)
                     self.white[i][0] = x
                     self.white[i][1] = y
             
@@ -218,6 +223,22 @@ class MyPanel(wx.Panel):
         else: 
             pass 
         
+    def returnTheCoinBack(self,reason):
+        #this function is call if whenthe user drag and drop the coin on illegal place
+        # illegal can be because
+        #  1. the station is occupy with other coind
+        #  2. release not in stationat all
+        print("return to beginning {0} {1} {2} {3}".format(self.j , self.saveX, self.saveY , reason))
+        if self.t == Color.BLACK: 
+            self.black[self.j][0] = self.saveX 
+            self.black[self.j][1] = self.saveY
+        elif self.t == Color.WHITE: 
+            self.white[self.j][0] = self.saveX 
+            self.white[self.j][1] = self.saveY 
+        self.drawSmallCircle()
+        self.drawCircle() 
+        self.Refresh() 
+        self.InitBuffer()
 
     def MouseUp(self, e): 
         if self.d == 1 and self.hit == 1:  #move circle only when mouse is press
@@ -230,24 +251,15 @@ class MyPanel(wx.Panel):
                 val = graph.checkCoinInNode(coin)
                 if val == True:
                     # do not drop the coin on other coin 
+                    self.returnTheCoinBack(1) 
                     return
-                graph.setCoinInNode(coin, Color.BLACK)
+                graph.setCoinInNode(coin, my_color)
                 msg = "put "+ coin[1:]
                 print(msg)
                 comm.out_q.put(msg)
             else:
-                #the coin was put in illegal place, take it to the place it begin to  drag
-                print("return to beginning {0} {1} {2}".format(self.j , self.saveX, self.saveY))
-                if self.t == Color.BLACK: 
-                    self.black[self.j][0] = self.saveX 
-                    self.black[self.j][1] = self.saveY
-                elif self.t == Color.WHITE: 
-                    self.white[self.j][0] = self.saveX 
-                    self.white[self.j][1] = self.saveY 
-                self.drawSmallCircle()
-                self.drawCircle() 
-                self.Refresh() 
-                self.InitBuffer()
+                # the coin was not dropped on one of 24 stations
+                self.returnTheCoinBack(2) 
 
     def MouseDown(self, e): 
         self.d = 1 

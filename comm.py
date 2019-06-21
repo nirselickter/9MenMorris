@@ -73,6 +73,10 @@ def server_recv():
 def client_recv(my_socket):
     while True:
         data = my_socket.recv(1024)
+        if data=="":
+            print("server close this socket")
+            my_socket.close()
+            break #get out from thread
         data = data.decode('ascii')
         print ("server send:" + data )
         pub.sendMessage("update", msg="server response " +data)

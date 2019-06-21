@@ -75,6 +75,7 @@ def setCoinInNode(node1, val):
     if len(graph[node1][1]) == 0:
         graph[node1][1].append(val)
         #printNodeValue(node1)
+        #printGraph()
         return True
     #it is not possible to set coin on a non empty node
     return False
