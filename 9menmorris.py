@@ -24,7 +24,7 @@ class GAME_TURN(Enum):
     CLIENT_TURN = 0
     SERVER_TURN = 1
 
-NMB_OF_COINS = 3
+NMB_OF_COINS = 5
 
 flag = 0
 
@@ -167,7 +167,7 @@ class MyPanel(wx.Panel):
         t = msg
         tmp = t[len("server response")+1:]
         info = tmp.split(" ")
-        print("145", tmp, info)
+        #print("wx rcv from remote", msg)
         if len(info) == 4:
             if info[0] == "put":
                 coin = int(info[1])
@@ -180,7 +180,7 @@ class MyPanel(wx.Panel):
                 if prvStation != "g100":
                     graph.clearCoinInNode(prvStation)     
                 graph.setCoinInNode(coin, station, other_color)
-                print("iuy", station, x, y)
+                #print("updateDisplay put", station, x, y)
                 if (other_color == Color.BLACK):
                     self.black[coin][0] = x
                     self.black[coin][1] = y
@@ -190,10 +190,10 @@ class MyPanel(wx.Panel):
                 
                 if server == True :
                     self.turn = GAME_TURN.SERVER_TURN
-                    print("4a3", "you are server and now you got the turn")
+                    print("you are server and now you got the turn")
                 elif server == False:
                     self.turn = GAME_TURN.CLIENT_TURN
-                    print("4i3", "you are client and now you got the turn")
+                    print("you are client and now you got the turn")
                 
                 self.InitBuffer() 
                 self.dc = wx.ClientDC(self) #when drawing in OnPaint, use PaintDC      
@@ -206,9 +206,9 @@ class MyPanel(wx.Panel):
             if info[0] == "take":
                 coin = int(info[1])
                 station = info[2]
-                print("838 other side take coin")
+                print("other side take coin")
                 if (my_color == Color.BLACK):
-                    self.black[coin][0] = 600
+                    self.black[coin][0] = 700
                     self.black[coin][1] = 600
                 else:
                     self.white[coin][0] = 0
@@ -250,7 +250,7 @@ class MyPanel(wx.Panel):
         #  1. the station is occupy with other coind
         #  2. release not in stationat all
         #  3. try to move coin in the first state of the game
-        print("return to beginning {0} {1} {2} {3}".format(self.j , self.saveX, self.saveY , reason))
+        #print("return to beginning {0} {1} {2} {3}".format(self.j , self.saveX, self.saveY , reason))
         if self.t == Color.BLACK: 
             self.black[self.j][0] = self.saveX 
             self.black[self.j][1] = self.saveY
@@ -267,7 +267,7 @@ class MyPanel(wx.Panel):
             self.d = 0 
             self.hit = 0
             x, y = e.GetPosition() 
-            print("545", x,y) #this print the position of circle afterrelease the mouse - it can be white or black. depend which one you drag
+            #print("MouseUp", x,y) #this print the position of circle afterrelease the mouse - it can be white or black. depend which one you drag
             station = graph.findHit(x,y)
             if station == "g100":
                 # the coin was not dropped on one of 24 stations
@@ -277,15 +277,15 @@ class MyPanel(wx.Panel):
             if val == True:
                 # do not drop the coin on other coin 
                 self.returnTheCoinBack(1) 
-                graph.printNodeValue(station)
+                #graph.printNodeValue("returnTheCoinBack(1)",station)
                 return
 
             if self.state == GAME_STATE.MIDDLE:
                 val = graph.checkIfConnect(self.saveStation, station)
                 if val == False:
                     # user try to drop the coin not in a neighbour station
-                    graph.printNodeValue(self.saveStation)
-                    graph.printNodeValue(station)
+                    #graph.printNodeValue("returnTheCoinBack(4)",self.saveStation)
+                    #graph.printNodeValue("returnTheCoinBack(4)",station)
                     self.returnTheCoinBack(4) 
                     return
                 
@@ -298,18 +298,31 @@ class MyPanel(wx.Panel):
 
                 self.nmbOfCoinsOnBoard =self.nmbOfCoinsOnBoard + 1
                 if self.nmbOfCoinsOnBoard == NMB_OF_COINS:
-                    print("9u9","change state to middle")
+                    #print("change state to middle")
                     self.state = GAME_STATE.MIDDLE
            
             if self.saveStation != "g100":
                 graph.clearCoinInNode(self.saveStation)      
             graph.setCoinInNode(self.j, station, my_color)
+            
+            # the user release the coin very close to the station, so we found hit
+            # we want to park the coin exactly on station's x,y, so we change alittle
+            #the position of the coin. in the next paint event we will see it.
+            x,y = graph.getStationXY(station)
+            if (my_color == Color.BLACK):
+                self.black[self.j][0] = x
+                self.black[self.j][1] = y
+            else:
+                self.white[self.j][0] = x
+                self.white[self.j][1] = y
+            
+            
             msg = "put "+ str(self.j) +" " + self.saveStation[1:] +" " + station[1:]
-            print("232 " + msg)
+            #print("wx send to remote" + msg)
             comm.out_q.put(msg)
             mill  = graph.checkMill(my_color)
             if len(mill) >= 1 and mill != self.lastMill:
-                print("555 new mill, you can take coin from your rival", mill)
+                print("new mill, you can take coin from your rival", mill)
                 self.WeGotMill = True
                 self.lastMill = mill
             else:
@@ -317,10 +330,10 @@ class MyPanel(wx.Panel):
                 self.lastMill = 0
             if server == True :
                 self.turn = GAME_TURN.CLIENT_TURN
-                print("4w3", "you are server and the turn change to client")
+                #print("MouseUp you are server and the turn change to client")
             elif server == False:
                 self.turn = GAME_TURN.SERVER_TURN
-                print("4w3", "you are client and the turn change to server")
+                #print("MouseUp you are client and the turn change to server")
 
                
             
@@ -329,14 +342,14 @@ class MyPanel(wx.Panel):
         if server == True :
             if self.turn == GAME_TURN.CLIENT_TURN:
                 if self.WeGotMill == False:
-                    print("2w3", "you are server and you try to play in client turn")
+                    #print("MouseDown you are server and you try to play in client turn")
                     return
             else:
                self.turn = GAME_TURN.SERVER_TURN 
         elif server == False:
             if self.turn == GAME_TURN.SERVER_TURN:
                 if self.WeGotMill == False:
-                    print("4w3", "you are client and you try to play in server turn")
+                    #print("MouseDown you are client and you try to play in server turn")
                     return
             else:
                 self.turn = GAME_TURN.CLIENT_TURN 
@@ -361,7 +374,7 @@ class MyPanel(wx.Panel):
                     self.saveX = self.white[i][0]
                     self.saveY = self.white[i][1] 
                     self.saveStation = graph.findHit(self.saveX,self.saveY) #if i game starting ,selfStation will be g100
-                    print("111", self.j, self.t , self.saveX, self.saveY , self.saveStation)
+                    #print("mouseDown white", self.j, self.t , self.saveX, self.saveY , self.saveStation)
             elif x_b == 0 and y_b == 0 and my_color ==  Color.BLACK: 
                     self.j = i #find which coin from 0 to 8 was press
                     self.t = Color.BLACK
@@ -369,9 +382,9 @@ class MyPanel(wx.Panel):
                     self.saveX = self.black[i][0]
                     self.saveY = self.black[i][1] 
                     self.saveStation = graph.findHit(self.saveX,self.saveY)
-                    print("222", self.j, self.t , self.saveX, self.saveY , self.saveStation)
+                    #print("mouseDown black", self.j, self.t , self.saveX, self.saveY , self.saveStation)
             elif x_w == 0 and y_w == 0 and my_color ==  Color.BLACK and self.WeGotMill == True:
-                    print("999 you take white", )
+                    print("mouseDown you take white", )
                     self.d = 0
                     self.j = i #find which coin from 0 to 8 was press
                     self.white[self.j][0] = 0 
@@ -380,25 +393,27 @@ class MyPanel(wx.Panel):
                     self.Hide()
                     self.Show()
                     station = graph.findHit(x,y)
-                    print(x,y,station)
+                    #print("mouseDown take white info",x,y,station)
                     coin = graph.getCoinNmbInStation(station)
+                    graph.clearCoinInNode(station)
                     msg = "take "+ str(coin) + " " + station
-                    print("176 " + msg)
+                    #print("wx send to remote" + msg)
                     comm.out_q.put(msg)
-
+                    
             elif x_b == 0 and y_b == 0 and my_color ==  Color.WHITE and self.WeGotMill == True: 
-                    print("888 you take black")
+                    #print("mouseDown you take black")
                     self.d = 0
                     self.j = i #find which coin from 0 to 8 was press
-                    self.black[self.j][0] = 600 
+                    self.black[self.j][0] = 700 
                     self.black[self.j][1] = 600 
                     self.WeGotMill = False
                     self.Hide()
                     self.Show()
                     station = graph.findHit(x,y)
                     coin = graph.getCoinNmbInStation(station)
+                    graph.clearCoinInNode(station)
                     msg = "take "+ str(coin)  + " " + station
-                    print("176 " + msg)
+                    #print("wx send to remote" + msg)
                     comm.out_q.put(msg)
             else: 
                 pass 

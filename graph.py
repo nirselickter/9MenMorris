@@ -48,7 +48,7 @@ def checkMill(color):
     l5 = graph["g17"][1] + graph["g20"][1] + graph["g23"][1]
     l6 = graph["g9"][1] + graph["g13"][1] + graph["g18"][1]
     l7 = graph["g6"][1] + graph["g14"][1]  + graph["g21"][1]
-    l8 = graph["g22"][1] + graph["g15"][1] + graph["g24"][1]
+    l8 = graph["g3"][1] + graph["g15"][1] + graph["g24"][1]
 
     tmp=[]
     lst = [r1,r2,r3,r4,r5,r6,r7,r8,l1,l2,l3,l4,l5,l6,l7,l8]
@@ -58,13 +58,13 @@ def checkMill(color):
             #print (i)
             if i[0] == i[1] and i[1] == i[2] and i[2] == color :
                 tmp.append(i) #we build list of all mills of color.
-                print("710 we got mill", tmp , len(tmp))    
+                print("we got mill", tmp , len(tmp))    
     return tmp
 
 
 #return tuple of (x,y) of node1
 def getStationXY(node1):
-    #printNodeValue(node1)
+    #printNodeValue("getStationXY",node1)
     return graph[node1][2]
 
 #this function get x,y and check if it is close ( less than 30)
@@ -77,14 +77,14 @@ def findHit(x,y):
          v = (xs-x)**2 + (ys - y)**2
          v = v ** 0.5
          #print(x,y,xs,ys,v)
-         if v < 20:
-            print (key)
+         if v < 30:
+            #print ("findHit",key)
             return key
      #if we are here we did not find hit - the coin is not at one of 24 stations
      return "g100"
 
-def printNodeValue(node1):
-    print("777", str(node1), graph[node1])
+def printNodeValue(msg, node1):
+    print(msg, str(node1), graph[node1])
 
 #check if there is already some coin in node1
 def checkCoinInNode(node1):
@@ -95,23 +95,29 @@ def checkCoinInNode(node1):
 
 def clearCoinInNode(node1):
     #print ("clearCoinInNode", node1)
-    printNodeValue(node1)
+    printGraph("clearCoinInNodeBefore ")
+    printNodeValue("clearCoinInNodeBefore" , node1)
     if len(graph[node1][1]) == 1:
         graph[node1][1].pop()
         graph[node1][3].pop()
-    #printNodeValue(node1)
+    printNodeValue("clearCoinInNodeAfter" , node1)
+    printGraph("clearCoinInNodeAfter ")
     #no need to return value, in any case value of node1 will be empty
 
 def setCoinInNode(coin, node1, val):
     #print ("setCoinInNode", node1, val)
-    printNodeValue(node1)
+    printNodeValue("setCoinInNodeBefore " + str(val) ,node1)
+    printGraph("setCoinInNodeBefore ")
     if len(graph[node1][1]) == 0:
         graph[node1][1].append(val)
         graph[node1][3].append(coin)
-        #printNodeValue(node1)
         #printGraph()
+        printNodeValue("setCoinInNodeAfter " + str(val) ,node1)
+        printGraph("setCoinInNodeAfter ")
         return True
     #it is not possible to set coin on a non empty node
+    printNodeValue("setCoinInNodeNoChange " + str(val) ,node1)
+    printGraph("setCoinInNodeNoChange ")
     return False
     
 def getCoinNmbInStation(node1):
@@ -123,18 +129,16 @@ def checkIfConnect(node1, node2):
         return False
     for key, value in graph.items():
         if key == node1:
-            print ("1111")
-            print (key, value[0])
             if node2 in value[0]:
                 return True
     #if we are here we scan the whole graph and there is
     # no connection between both nodes
-    print ("2222")
     return False
 
 
 
-def printGraph():
+def printGraph(msg):
+    print(msg)
     for key, value in graph.items():
         print (key, value)
 

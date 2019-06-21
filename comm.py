@@ -4,6 +4,7 @@ import sys
 import wx 
 from threading import Thread
 from wx.lib.pubsub import pub
+#import pypubsub instead of wx.lib.pubsub
 import graph 
 from time import sleep
 from queue import Queue
@@ -17,6 +18,7 @@ def server_send(client_socket, client_address):
     while flag == 1:
         if out_q.empty() == False:
             data = out_q.get()
+            print ("server_send: " + data)
             client_socket.send(data.encode('ascii'))
         sleep(0.05)
 
@@ -67,7 +69,7 @@ def server_recv():
             sendThread.start()
             continue
         client_info_str = client_info.decode('ascii')
-        print ("server got: " + client_info_str)
+        print ("server_recv: " + client_info_str)
         pub.sendMessage("update", msg="server response " +client_info_str)
 
 def client_recv(my_socket):
@@ -78,13 +80,14 @@ def client_recv(my_socket):
             my_socket.close()
             break #get out from thread
         data = data.decode('ascii')
-        print ("server send:" + data )
+        print ("client_recv:" + data )
         pub.sendMessage("update", msg="server response " +data)
 
 def client_send():
     print("start client")
     my_socket = socket.socket()
     my_socket.connect(("127.0.0.1",8820))
+    #my_socket.connect(("10.0.0.31",8820))
 
     recvThread = threading.Thread(target=client_recv, args=(my_socket,))
     recvThread.start()
@@ -92,6 +95,7 @@ def client_send():
     while True:
         if out_q.empty() == False:
             data = out_q.get()
+            print ("client_send:" + data )
             my_socket.send(data.encode('ascii'))
         sleep(0.05)
 
