@@ -1,11 +1,15 @@
-#http://wxpython-users.1045709.n5.nabble.com/Drag-and-drop-circles-td5714000.html
-# in this code you can wite in console 0 100 200 and the white coin number 0 is going to place x =100 y=200
+#in this code you can do two things
+# 1. you can drag one of the white coins toward the board.
+#     if you will be close enough (<10) from one of the 24 stations, it will write
+#     the station number - for example it will write g19
+# 2. the second thing you can do is write the console pair like 5 19 - it means
+#    take coin 5 from the white and move it to be on station 19
+
 
 import wx 
 from threading import Thread
 from wx.lib.pubsub import pub
-import graph 
-
+import graph4
 
 
 from enum import Enum
@@ -13,7 +17,7 @@ class Color(Enum):
     BLACK = 0
     WHITE = 1
 
-class consoleThread(Thread):
+class TestThread(Thread):
     """Test Worker Thread Class."""
 
     def __init__(self):
@@ -57,7 +61,7 @@ class MyPanel(wx.Panel):
         self.initCircles(dc)
         self.Buffer = None 
         
-        self.thread = consoleThread()
+        self.thread = TestThread()
         # create a pubsub receiver
         pub.subscribe(self.updateDisplay, "update")
         
@@ -91,7 +95,7 @@ class MyPanel(wx.Panel):
 
     def drawSmallCircle(self): 
         self.dc.SetBrush(wx.Brush("blue", wx.SOLID)) 
-        for key, value in graph.graph.items():
+        for key, value in graph4.graph.items():
             x = value[2][0]
             y = value[2][1]
             self.dc.DrawCircle(x, y, 5) 
@@ -142,16 +146,28 @@ class MyPanel(wx.Panel):
         Receives data from thread and updates the display
         """
         t = msg
+        #if isinstance(t, int):
+        #    self.displayLbl.SetLabel("server will answer here")
+        #else:
+        #    self.displayLbl.SetLabel("%s" % t)
+        #    self.btn.Enable()
         tmp = t[len("server response")+1:]
         info = tmp.split(" ")
         print(tmp, info)
+        #return
         i = int(info[0])
         nmb = int(info[1])
         coin = "g"+str(nmb)
-        x,y = graph.getCoinXY(coin)
+        x,y = graph4.getCoinXY(coin)
         print(coin, x, y)
+        #return
         self.white[i][0] = x
         self.white[i][1] = y
+        #size=self.GetClientSize() 
+        #self.Buffer = wx.Bitmap(size.width,size.height) 
+        #self.dc = wx.ClientDC() 
+        #self.dc.SelectObject(self.Buffer)
+        
         
         self.InitBuffer() 
         self.dc = wx.ClientDC(self) #when drawing in OnPaint, use PaintDC      
@@ -160,6 +176,9 @@ class MyPanel(wx.Panel):
         self.drawCircle() 
         self.Hide()
         self.Show()
+       #wx.Update(self)
+        #for i in range(9):
+        #    print(self.white[i][0], self.white[i][1])
 
 
 
@@ -217,6 +236,10 @@ class MyPanel(wx.Panel):
         self.hit = 0
         x, y = e.GetPosition() 
         print(x,y) #this print the position of circle afterrelease the mouse - it can be white or black. depend which one you drag
+        val = graph4.findHit(x,y)
+        if val != 100:
+            print("111",val)
+            
 
     def MouseDown(self, e): 
         self.d = 1 
