@@ -1,9 +1,6 @@
-# in this version the client send command "put 14" and not "4 14 "
-# it means that the server shall manage the coins in some pull 
-# and when got command to put, it shall take from pull.
-# the server also check if the put station is occupy or not
-# it also check if drag/drop station is occupy or not
-#
+#in this version there are two boards
+#the client is black and server is white
+#you need to move the black first
 
 
 import threading
@@ -13,7 +10,7 @@ import wx
 from threading import Thread
 from wx.lib.pubsub import pub
 import graph 
-import server
+import client
 from time import sleep
 from queue import Queue
 
@@ -23,6 +20,7 @@ class Color(Enum):
     WHITE = 1
 
 flag = 0
+
 
 class MyPanel(wx.Panel): 
     
@@ -45,8 +43,8 @@ class MyPanel(wx.Panel):
         self.Buffer = None 
         
         #self.thread = TestThread()
-        recvThread = threading.Thread(target=server.server_recv, args=())
-        recvThread.start()
+        sendThread = threading.Thread(target=client.client_send, args=())
+        sendThread.start()
 
         # create a pubsub receiver
         pub.subscribe(self.updateDisplay, "update")
@@ -141,22 +139,22 @@ class MyPanel(wx.Panel):
                 val = graph.checkCoinInNode(coin)
                 if val == True:
                     print (coin + " station is occupy")
-                    server.out_q.put(coin + " station is occupy")
+                    client.out_q.put(coin + " station is occupy")
                     return
                     
                 i = self.pullIndex
                 self.pullIndex = self.pullIndex + 1
                 if self.pullIndex == 10:
                     print ("no more coins")
-                    server.out_q.put("no more coins")
+                    client.out_q.put("no more coins")
                     return
                 
-                graph.setCoinInNode(coin, Color.BLACK)
+                graph.setCoinInNode(coin, Color.WHITE)
                 
                 x,y = graph.getCoinXY(coin)
                 print(coin, x, y)
-                self.black[i][0] = x
-                self.black[i][1] = y
+                self.white[i][0] = x
+                self.white[i][1] = y
                 
                 
                 self.InitBuffer() 
@@ -224,10 +222,10 @@ class MyPanel(wx.Panel):
             if val == True:
                 # do not drop the coin on other coin 
                 return
-            graph.setCoinInNode(coin, Color.BLACK)
+            graph.setCoinInNode(coin, Color.WHITE)
             msg = "put "+ coin[1:]
             print(msg)
-            server.out_q.put(msg)
+            client.out_q.put(msg)
 
     def MouseDown(self, e): 
         self.d = 1 

@@ -71,6 +71,9 @@ def server_recv():
             (client_socket, client_address) = server_socket.accept() #be ready for next client
             client_socket.settimeout(300)
             print ("client accept from {0} at port {1}".format(client_address, port))
+            flag = 1
+            sendThread = threading.Thread(target=server_send, args=(client_socket, client_address))
+            sendThread.start()
             continue
         # if the code will not check empty string,then once the client terminate,
         # the server will continusly will get empty string
@@ -82,6 +85,9 @@ def server_recv():
             (client_socket, client_address) = server_socket.accept()
             print ("client accept from {0} at port {1}".format(client_address, port))
             client_socket.settimeout(300)
+            flag = 1
+            sendThread = threading.Thread(target=server_send, args=(client_socket, client_address))
+            sendThread.start()
             continue
         client_info_str = client_info.decode('ascii')
         print ("server got: " + client_info_str)
