@@ -9,6 +9,7 @@ import comm
 from time import sleep
 from queue import Queue
 import argparse
+import pickle
 
 from enum import Enum
 class Color(Enum):
@@ -194,6 +195,13 @@ class MyPanel(wx.Panel):
                 elif server == False:
                     self.turn = GAME_TURN.CLIENT_TURN
                     print("you are client and now you got the turn")
+                    
+                #for debug
+                val = graph.getGraphDb()
+                val = pickle.dumps(val)
+                val = val.decode('latin-1')
+                msg = "checkDb "+ val
+                comm.out_q.put(msg)
                 
                 self.InitBuffer() 
                 self.dc = wx.ClientDC(self) #when drawing in OnPaint, use PaintDC      
@@ -214,6 +222,15 @@ class MyPanel(wx.Panel):
                     self.white[coin][0] = 0
                     self.white[coin][1] = 600
                 graph.clearCoinInNode(station)
+                
+                #for debug
+                val = graph.getGraphDb()
+                val = pickle.dumps(val)
+                val = val.decode('latin-1')
+                msg = "checkDb "+ val
+                comm.out_q.put(msg)
+
+                
                 self.InitBuffer() 
                 self.dc = wx.ClientDC(self) #when drawing in OnPaint, use PaintDC      
                 self.drawBoard(self.dc)
@@ -221,6 +238,13 @@ class MyPanel(wx.Panel):
                 self.drawCircle() 
                 self.Hide()
                 self.Show()
+        if tmp[:3] == "che":
+             tmp = tmp[8:]
+             tmp = tmp.encode('latin-1')
+             tmp = pickle.loads(tmp)
+             graph.compareDb(tmp)
+             #print("111111111111111111111111")
+             #print(tmp)
 
 
     def MouseMove(self, e): 
@@ -322,7 +346,7 @@ class MyPanel(wx.Panel):
             comm.out_q.put(msg)
             mill  = graph.checkMill(my_color)
             if len(mill) >= 1 and mill != self.lastMill:
-                print("new mill, you can take coin from your rival", mill)
+                print(">>>new mill, you can take coin from your rival")
                 self.WeGotMill = True
                 self.lastMill = mill
             else:
@@ -330,10 +354,10 @@ class MyPanel(wx.Panel):
                 self.lastMill = 0
             if server == True :
                 self.turn = GAME_TURN.CLIENT_TURN
-                #print("MouseUp you are server and the turn change to client")
+                print("You are server and the turn change to client")
             elif server == False:
                 self.turn = GAME_TURN.SERVER_TURN
-                #print("MouseUp you are client and the turn change to server")
+                print("You are client and the turn change to server")
 
                
             
@@ -342,14 +366,14 @@ class MyPanel(wx.Panel):
         if server == True :
             if self.turn == GAME_TURN.CLIENT_TURN:
                 if self.WeGotMill == False:
-                    #print("MouseDown you are server and you try to play in client turn")
+                    print("You are server and you try to play in client turn")
                     return
             else:
                self.turn = GAME_TURN.SERVER_TURN 
         elif server == False:
             if self.turn == GAME_TURN.SERVER_TURN:
                 if self.WeGotMill == False:
-                    #print("MouseDown you are client and you try to play in server turn")
+                    print("You are client and you try to play in server turn")
                     return
             else:
                 self.turn = GAME_TURN.CLIENT_TURN 
@@ -384,7 +408,7 @@ class MyPanel(wx.Panel):
                     self.saveStation = graph.findHit(self.saveX,self.saveY)
                     #print("mouseDown black", self.j, self.t , self.saveX, self.saveY , self.saveStation)
             elif x_w == 0 and y_w == 0 and my_color ==  Color.BLACK and self.WeGotMill == True:
-                    print("mouseDown you take white", )
+                    print("You take white from rival", )
                     self.d = 0
                     self.j = i #find which coin from 0 to 8 was press
                     self.white[self.j][0] = 0 
@@ -401,7 +425,7 @@ class MyPanel(wx.Panel):
                     comm.out_q.put(msg)
                     
             elif x_b == 0 and y_b == 0 and my_color ==  Color.WHITE and self.WeGotMill == True: 
-                    #print("mouseDown you take black")
+                    #print("You take black from rival")
                     self.d = 0
                     self.j = i #find which coin from 0 to 8 was press
                     self.black[self.j][0] = 700 

@@ -58,8 +58,23 @@ def checkMill(color):
             #print (i)
             if i[0] == i[1] and i[1] == i[2] and i[2] == color :
                 tmp.append(i) #we build list of all mills of color.
-                print("we got mill", tmp , len(tmp))    
+                #print("we got mill", tmp , len(tmp))    
     return tmp
+
+
+def compareDb(val):
+    if val != graph:
+        for i in range(50):
+            print("errrrrrrrrrrrrrrrrrrrrror the two db are not sync")
+            print(graph)
+            print(val)
+    else:
+         print("the client and server db are sync!!!")
+    
+
+
+def getGraphDb():
+    return graph
 
 
 #return tuple of (x,y) of node1
@@ -95,29 +110,29 @@ def checkCoinInNode(node1):
 
 def clearCoinInNode(node1):
     #print ("clearCoinInNode", node1)
-    printGraph("clearCoinInNodeBefore ")
-    printNodeValue("clearCoinInNodeBefore" , node1)
+    #printGraph("clearCoinInNodeBefore ")
+    #printNodeValue("clearCoinInNodeBefore" , node1)
     if len(graph[node1][1]) == 1:
         graph[node1][1].pop()
         graph[node1][3].pop()
-    printNodeValue("clearCoinInNodeAfter" , node1)
-    printGraph("clearCoinInNodeAfter ")
+    #printNodeValue("clearCoinInNodeAfter" , node1)
+    #printGraph("clearCoinInNodeAfter ")
     #no need to return value, in any case value of node1 will be empty
 
 def setCoinInNode(coin, node1, val):
     #print ("setCoinInNode", node1, val)
-    printNodeValue("setCoinInNodeBefore " + str(val) ,node1)
-    printGraph("setCoinInNodeBefore ")
+    #printNodeValue("setCoinInNodeBefore " + str(val) ,node1)
+    #printGraph("setCoinInNodeBefore ")
     if len(graph[node1][1]) == 0:
         graph[node1][1].append(val)
         graph[node1][3].append(coin)
         #printGraph()
-        printNodeValue("setCoinInNodeAfter " + str(val) ,node1)
-        printGraph("setCoinInNodeAfter ")
+        #printNodeValue("setCoinInNodeAfter " + str(val) ,node1)
+        #printGraph("setCoinInNodeAfter ")
         return True
     #it is not possible to set coin on a non empty node
-    printNodeValue("setCoinInNodeNoChange " + str(val) ,node1)
-    printGraph("setCoinInNodeNoChange ")
+    #printNodeValue("setCoinInNodeNoChange " + str(val) ,node1)
+    #printGraph("setCoinInNodeNoChange ")
     return False
     
 def getCoinNmbInStation(node1):

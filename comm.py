@@ -18,8 +18,8 @@ def server_send(client_socket, client_address):
     while flag == 1:
         if out_q.empty() == False:
             data = out_q.get()
-            print ("server_send: " + data)
-            client_socket.send(data.encode('ascii'))
+            #print ("server_send: " + data)
+            client_socket.sendall(data.encode('latin-1'))
         sleep(0.05)
 
 def server_recv():
@@ -41,7 +41,7 @@ def server_recv():
 
     while(1):
         try:
-            client_info = client_socket.recv(1024)
+            client_info = client_socket.recv(65536)
         except Exception as e:
             flag = 0
             sleep(0.2) #let the server_send thread to be close
@@ -68,19 +68,19 @@ def server_recv():
             sendThread = threading.Thread(target=server_send, args=(client_socket, client_address))
             sendThread.start()
             continue
-        client_info_str = client_info.decode('ascii')
-        print ("server_recv: " + client_info_str)
+        client_info_str = client_info.decode('latin-1')
+        #print ("server_recv: " + client_info_str)
         pub.sendMessage("update", msg="server response " +client_info_str)
 
 def client_recv(my_socket):
     while True:
-        data = my_socket.recv(1024)
+        data = my_socket.recv(65536)
         if data=="":
             print("server close this socket")
             my_socket.close()
             break #get out from thread
-        data = data.decode('ascii')
-        print ("client_recv:" + data )
+        data = data.decode('latin-1')
+        #print ("client_recv:" + data )
         pub.sendMessage("update", msg="server response " +data)
 
 def client_send():
@@ -95,8 +95,8 @@ def client_send():
     while True:
         if out_q.empty() == False:
             data = out_q.get()
-            print ("client_send:" + data )
-            my_socket.send(data.encode('ascii'))
+            #print ("client_send:" + data )
+            my_socket.sendall(data.encode('latin-1'))
         sleep(0.05)
 
 
