@@ -4,6 +4,7 @@ import sys
 import wx 
 from threading import Thread
 from wx.lib.pubsub import pub
+#from pubsub import pub
 import graph 
 import comm
 from time import sleep
@@ -34,7 +35,35 @@ server = False
 my_color = Color.WHITE
 other_color = Color.BLACK
 
-class StamPanel(wx.Panel):
+
+
+class ChatPanel(wx.Panel):
+
+    def __init__(self, parent, mysize):
+        super().__init__(parent,-1, size = mysize, style=wx.SIMPLE_BORDER)
+        
+        main = wx.BoxSizer(wx.HORIZONTAL)
+        
+        self.lbl = wx.StaticText(self, label="Here we write messages:")
+        font = wx.Font(18, wx.MODERN, wx.ITALIC, wx.NORMAL)
+        self.lbl.SetFont(font)
+        main.Add(self.lbl ) 
+        
+        pub.subscribe(self.writeMsg, "message2")
+
+        
+        self.SetSizer(main)     
+        
+        self.Show()
+   
+    # note , it is important to write msg and not other variable name. it took me one hour to get it
+    def writeMsg(self,msg):
+        self.lbl.SetLabel(msg)
+        
+        
+
+
+class SidePanel(wx.Panel):
 
     def __init__(self, parent, mysize):
         super().__init__(parent,-1, size = mysize, style=wx.SIMPLE_BORDER)
@@ -44,6 +73,9 @@ class MyPanel(wx.Panel):
     def __init__(self, parent, id , mysize): 
         wx.Panel.__init__(self, parent, id,size = mysize, style=wx.SIMPLE_BORDER) 
 
+        #ChatPanel.writeMsg(val="Hello world !")
+        
+        #print(parent.__dict__.keys)
         
         self.r = 30
         self.j = 0 
@@ -299,7 +331,11 @@ class MyPanel(wx.Panel):
         self.Refresh() 
         self.InitBuffer()
 
-    def MouseUp(self, e): 
+    def MouseUp(self, e):
+
+
+
+
         if self.d == 1 and self.hit == 1:  #move circle only when mouse is press
             self.d = 0 
             self.hit = 0
@@ -365,6 +401,7 @@ class MyPanel(wx.Panel):
             if nmbOfMills > self.nmbOfMills:
                 print("\n>>>>>new mill, you can take coin from your rival" )
                 self.WeGotMill = True
+                pub.sendMessage("message2", msg="new mill, you can take coin from your rival")
             else:              
                 self.WeGotMill = False
             self.nmbOfMills = nmbOfMills
@@ -477,10 +514,11 @@ class MainFrame(wx.Frame):
         col1 = wx.BoxSizer(wx.VERTICAL)
         col2 = wx.BoxSizer(wx.VERTICAL)
 
-        sidePanel = StamPanel(self, mysize=(200,700))
+        sidePanel = SidePanel(self, mysize=(200,700))
         gamePanel = MyPanel(self, -1,mysize=(700,700))
-        chatPanel = StamPanel(self, mysize=(900,200))
+        self.chatPanel = ChatPanel(self, mysize=(900,200))
 
+        
 
         col1.Add(sidePanel)
         col2.Add(gamePanel)
@@ -488,7 +526,7 @@ class MainFrame(wx.Frame):
         row.Add(col1)
         row.Add(col2)
 
-        row1.Add(chatPanel)
+        row1.Add(self.chatPanel)
         
         main.Add(row)
         main.Add(row1)
