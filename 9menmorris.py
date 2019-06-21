@@ -20,6 +20,11 @@ class GAME_STATE(Enum):
     MIDDLE = 1
     END = 2
 
+class GAME_TURN(Enum):
+    CLIENT_TURN = 0
+    SERVER_TURN = 1
+
+
 
 flag = 0
 
@@ -42,7 +47,10 @@ class MyPanel(wx.Panel):
         self.hit = 0 #if 0 - mouse did not press any circle
         self.saveX = 0
         self.saveY = 0
+        self.saveStation = 100
         self.state = GAME_STATE.START
+        self.nmbOfCoinsOnBoard = 0
+        self.turn = GAME_TURN.CLIENT_TURN
 
         dc = wx.MemoryDC() #when drawing not in OnPaint, use MemoryDC
         self.initCircles(dc)
@@ -147,7 +155,7 @@ class MyPanel(wx.Panel):
                 nmb1 = int(info[2])
                 station = "g"+str(nmb1)
                                                
-                x,y = graph.getCoinXY(station)
+                x,y = graph.getStationXY(station)
                 graph.setCoinInNode(station, other_color)
                 print("iuy", station, x, y)
                 if (other_color == Color.BLACK):
@@ -156,8 +164,13 @@ class MyPanel(wx.Panel):
                 else:
                     self.white[coin][0] = x
                     self.white[coin][1] = y
-            
                 
+                if server == True :
+                    self.turn = GAME_TURN.SERVER_TURN
+                    print("4a3", "you are server and now you got the turn")
+                elif server == False:
+                    self.turn = GAME_TURN.CLIENT_TURN
+                    print("4i3", "you are client and now you got the turn")
                 
                 self.InitBuffer() 
                 self.dc = wx.ClientDC(self) #when drawing in OnPaint, use PaintDC      
@@ -215,6 +228,7 @@ class MyPanel(wx.Panel):
         # illegal can be because
         #  1. the station is occupy with other coind
         #  2. release not in stationat all
+        #  3. try to move coin in the first state of the game
         print("return to beginning {0} {1} {2} {3}".format(self.j , self.saveX, self.saveY , reason))
         if self.t == Color.BLACK: 
             self.black[self.j][0] = self.saveX 
@@ -240,15 +254,45 @@ class MyPanel(wx.Panel):
                     # do not drop the coin on other coin 
                     self.returnTheCoinBack(1) 
                     return
+                if self.saveStation != 100 and self.state == GAME_STATE.START:
+                    # user try to move coin from station in the start state. this is prohibited
+                    # in the start state, it is possible just to put coins on the board
+                    self.returnTheCoinBack(3) 
+                    return
+                if self.state == GAME_STATE.START:
+                    self.nmbOfCoinsOnBoard =self.nmbOfCoinsOnBoard + 1
+                    if self.nmbOfCoinsOnBoard == 9:
+                        print("9u9","change state to middle")
+                        self.state = GAME_STATE.MIDDLE
                 graph.setCoinInNode(station, my_color)
                 msg = "put "+ str(self.j) +" " +  station[1:]
-                print("232" + msg)
+                print("232 " + msg)
                 comm.out_q.put(msg)
+                if server == True :
+                    self.turn = GAME_TURN.CLIENT_TURN
+                    print("4w3", "you are server and the turn change to client")
+                elif server == False:
+                    self.turn = GAME_TURN.SERVER_TURN
+                    print("4w3", "you are client and the turn change to server")
             else:
                 # the coin was not dropped on one of 24 stations
                 self.returnTheCoinBack(2) 
+            
 
     def MouseDown(self, e): 
+        if server == True :
+            if self.turn == GAME_TURN.CLIENT_TURN:
+                print("2w3", "you are server and you try to play in client turn")
+                return
+            else:
+               self.turn = GAME_TURN.SERVER_TURN 
+        elif server == False:
+            if self.turn == GAME_TURN.SERVER_TURN:
+                print("4w3", "you are client and you try to play in server turn")
+                return
+            else:
+                self.turn = GAME_TURN.CLIENT_TURN 
+         
         self.d = 1 
 
         x, y = e.GetPosition() 
@@ -268,14 +312,16 @@ class MyPanel(wx.Panel):
                     self.hit = 1
                     self.saveX = self.white[i][0]
                     self.saveY = self.white[i][1] 
-                    print("111", self.j, self.t , self.saveX, self.saveY)
+                    self.saveStation = graph.findHit(self.saveX,self.saveY)
+                    print("111", self.j, self.t , self.saveX, self.saveY , self.saveStation)
             elif x_b == 0 and y_b == 0 and my_color ==  Color.BLACK: 
                     self.j = i #find which coin from 0 to 8 was press
                     self.t = Color.BLACK
                     self.hit = 1
                     self.saveX = self.black[i][0]
                     self.saveY = self.black[i][1] 
-                    print("222", self.j, self.t , self.saveX, self.saveY)
+                    self.saveStation = graph.findHit(self.saveX,self.saveY)
+                    print("222", self.j, self.t , self.saveX, self.saveY , self.saveStation)
             else: 
                 pass 
         

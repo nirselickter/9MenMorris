@@ -31,7 +31,7 @@ graph =  { 'g1': [('g2', 'g10'),[],(100,50)],
 }
 
 #return tuple of (x,y) of node1
-def getCoinXY(node1):
+def getStationXY(node1):
     #printNodeValue(node1)
     return graph[node1][2]
 
