@@ -31,7 +31,7 @@ def server_recv():
 
     (client_socket, client_address) = server_socket.accept()
     print ("client accept from {0} at port {1}".format(client_address, port))
-    client_socket.settimeout(300)
+    client_socket.settimeout(3000)
 
     flag = 1
     sendThread = threading.Thread(target=server_send, args=(client_socket, client_address))
@@ -46,7 +46,7 @@ def server_recv():
             print (e)
             client_socket.close()
             (client_socket, client_address) = server_socket.accept() #be ready for next client
-            client_socket.settimeout(300)
+            client_socket.settimeout(3000)
             print ("client accept from {0} at port {1}".format(client_address, port))
             flag = 1
             sendThread = threading.Thread(target=server_send, args=(client_socket, client_address))
@@ -61,7 +61,7 @@ def server_recv():
             print ("client close the socket")
             (client_socket, client_address) = server_socket.accept()
             print ("client accept from {0} at port {1}".format(client_address, port))
-            client_socket.settimeout(300)
+            client_socket.settimeout(3000)
             flag = 1
             sendThread = threading.Thread(target=server_send, args=(client_socket, client_address))
             sendThread.start()

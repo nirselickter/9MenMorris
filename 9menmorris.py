@@ -51,6 +51,8 @@ class MyPanel(wx.Panel):
         self.state = GAME_STATE.START
         self.nmbOfCoinsOnBoard = 0
         self.turn = GAME_TURN.CLIENT_TURN
+        self.WeGotMill = False
+        self.lastMill = 0
 
         dc = wx.MemoryDC() #when drawing not in OnPaint, use MemoryDC
         self.initCircles(dc)
@@ -177,7 +179,7 @@ class MyPanel(wx.Panel):
                 x,y = graph.getStationXY(station)
                 if prvStation != "g100":
                     graph.clearCoinInNode(prvStation)     
-                graph.setCoinInNode(station, other_color)
+                graph.setCoinInNode(coin, station, other_color)
                 print("iuy", station, x, y)
                 if (other_color == Color.BLACK):
                     self.black[coin][0] = x
@@ -200,13 +202,25 @@ class MyPanel(wx.Panel):
                 self.drawCircle() 
                 self.Hide()
                 self.Show()
-
-
-
-
-
-
-
+        elif len(info) == 3:
+            if info[0] == "take":
+                coin = int(info[1])
+                station = info[2]
+                print("838 other side take coin")
+                if (my_color == Color.BLACK):
+                    self.black[coin][0] = 600
+                    self.black[coin][1] = 600
+                else:
+                    self.white[coin][0] = 0
+                    self.white[coin][1] = 600
+                graph.clearCoinInNode(station)
+                self.InitBuffer() 
+                self.dc = wx.ClientDC(self) #when drawing in OnPaint, use PaintDC      
+                self.drawBoard(self.dc)
+                self.drawSmallCircle()
+                self.drawCircle() 
+                self.Hide()
+                self.Show()
 
 
     def MouseMove(self, e): 
@@ -289,10 +303,18 @@ class MyPanel(wx.Panel):
            
             if self.saveStation != "g100":
                 graph.clearCoinInNode(self.saveStation)      
-            graph.setCoinInNode(station, my_color)
+            graph.setCoinInNode(self.j, station, my_color)
             msg = "put "+ str(self.j) +" " + self.saveStation[1:] +" " + station[1:]
             print("232 " + msg)
             comm.out_q.put(msg)
+            mill  = graph.checkMill(my_color)
+            if len(mill) >= 1 and mill != self.lastMill:
+                print("555 new mill, you can take coin from your rival", mill)
+                self.WeGotMill = True
+                self.lastMill = mill
+            else:
+                self.WeGotMill = False
+                self.lastMill = 0
             if server == True :
                 self.turn = GAME_TURN.CLIENT_TURN
                 print("4w3", "you are server and the turn change to client")
@@ -306,14 +328,16 @@ class MyPanel(wx.Panel):
     def MouseDown(self, e): 
         if server == True :
             if self.turn == GAME_TURN.CLIENT_TURN:
-                print("2w3", "you are server and you try to play in client turn")
-                return
+                if self.WeGotMill == False:
+                    print("2w3", "you are server and you try to play in client turn")
+                    return
             else:
                self.turn = GAME_TURN.SERVER_TURN 
         elif server == False:
             if self.turn == GAME_TURN.SERVER_TURN:
-                print("4w3", "you are client and you try to play in server turn")
-                return
+                if self.WeGotMill == False:
+                    print("4w3", "you are client and you try to play in server turn")
+                    return
             else:
                 self.turn = GAME_TURN.CLIENT_TURN 
          
@@ -346,6 +370,36 @@ class MyPanel(wx.Panel):
                     self.saveY = self.black[i][1] 
                     self.saveStation = graph.findHit(self.saveX,self.saveY)
                     print("222", self.j, self.t , self.saveX, self.saveY , self.saveStation)
+            elif x_w == 0 and y_w == 0 and my_color ==  Color.BLACK and self.WeGotMill == True:
+                    print("999 you take white", )
+                    self.d = 0
+                    self.j = i #find which coin from 0 to 8 was press
+                    self.white[self.j][0] = 0 
+                    self.white[self.j][1] = 600 
+                    self.WeGotMill = False
+                    self.Hide()
+                    self.Show()
+                    station = graph.findHit(x,y)
+                    print(x,y,station)
+                    coin = graph.getCoinNmbInStation(station)
+                    msg = "take "+ str(coin) + " " + station
+                    print("176 " + msg)
+                    comm.out_q.put(msg)
+
+            elif x_b == 0 and y_b == 0 and my_color ==  Color.WHITE and self.WeGotMill == True: 
+                    print("888 you take black")
+                    self.d = 0
+                    self.j = i #find which coin from 0 to 8 was press
+                    self.black[self.j][0] = 600 
+                    self.black[self.j][1] = 600 
+                    self.WeGotMill = False
+                    self.Hide()
+                    self.Show()
+                    station = graph.findHit(x,y)
+                    coin = graph.getCoinNmbInStation(station)
+                    msg = "take "+ str(coin)  + " " + station
+                    print("176 " + msg)
+                    comm.out_q.put(msg)
             else: 
                 pass 
         

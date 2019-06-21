@@ -4,31 +4,63 @@ class Color(Enum):
     WHITE = 1
 
 #
-graph =  { 'g1': [('g2', 'g10'),[],(100,50)],
-    'g2': [('g1', 'g3', 'g5'),[],(350,50)],
-    'g3': [('g2', 'g15'),[],(600,50)],
-    'g4': [('g5', 'g11'),[],(180,125)],
-    'g5': [('g2', 'g4','g6', 'g8'),[],(350,125)],
-    'g6': [('g5', 'g14'),[],(525,125)],
-    'g7': [('g8', 'g12'),[],(250,200)],
-    'g8': [('g5', 'g7', 'g9'),[],(350,200)],
-    'g9': [('g8', 'g13'),[],(450,200)],
-    'g10': [('g1', 'g11','g22'),[],(100,300)],
-    'g11': [('g5', 'g10','g12', 'g19'),[],(180,300)],
-    'g12': [('g7', 'g11', 'g16'),[],(250,300)],
-    'g13': [('g9', 'g14', 'g18'),[],(450,300)],
-    'g14': [('g6', 'g13', 'g15', 'g21'),[],(525,300)],
-    'g15': [('g3', 'g14', 'g24'),[],(600,300)],
-    'g16': [('g12', 'g17'),[],(250,400)],
-    'g17': [('g16', 'g18', 'g20'),[],(350,400)],
-    'g18': [('g13', 'g17'),[],(450,400)],
-    'g19': [('g11', 'g20'),[],(180,475)],
-    'g20': [('g17', 'g19', 'g21', 'g23'),[],(350,475)],
-    'g21': [('g14', 'g20'),[],(525,475)],
-    'g22': [('g10', 'g23'),[],(100,550)],
-    'g23': [('g10', 'g22', 'g24'),[],(350,550)],
-    'g24': [('g15', 'g23'),[],(600,550)]
+graph =  { 'g1': [('g2', 'g10'),[],(100,50),[]],
+    'g2': [('g1', 'g3', 'g5'),[],(350,50),[]],
+    'g3': [('g2', 'g15'),[],(600,50),[]],
+    'g4': [('g5', 'g11'),[],(180,125),[]],
+    'g5': [('g2', 'g4','g6', 'g8'),[],(350,125),[]],
+    'g6': [('g5', 'g14'),[],(525,125),[]],
+    'g7': [('g8', 'g12'),[],(250,200),[]],
+    'g8': [('g5', 'g7', 'g9'),[],(350,200),[]],
+    'g9': [('g8', 'g13'),[],(450,200),[]],
+    'g10': [('g1', 'g11','g22'),[],(100,300),[]],
+    'g11': [('g5', 'g10','g12', 'g19'),[],(180,300),[]],
+    'g12': [('g7', 'g11', 'g16'),[],(250,300),[]],
+    'g13': [('g9', 'g14', 'g18'),[],(450,300),[]],
+    'g14': [('g6', 'g13', 'g15', 'g21'),[],(525,300),[]],
+    'g15': [('g3', 'g14', 'g24'),[],(600,300),[]],
+    'g16': [('g12', 'g17'),[],(250,400),[]],
+    'g17': [('g16', 'g18', 'g20'),[],(350,400),[]],
+    'g18': [('g13', 'g17'),[],(450,400),[]],
+    'g19': [('g11', 'g20'),[],(180,475),[]],
+    'g20': [('g17', 'g19', 'g21', 'g23'),[],(350,475),[]],
+    'g21': [('g14', 'g20'),[],(525,475),[]],
+    'g22': [('g10', 'g23'),[],(100,550),[]],
+    'g23': [('g10', 'g22', 'g24'),[],(350,550),[]],
+    'g24': [('g15', 'g23'),[],(600,550),[]]
 }
+
+
+def checkMill(color):
+    r1 = graph["g1"][1] + graph["g2"][1] + graph["g3"][1]
+    r2 = graph["g4"][1] + graph["g5"][1] + graph["g6"][1]
+    r3 = graph["g7"][1] + graph["g8"][1] + graph["g9"][1]
+    r4 = graph["g10"][1] + graph["g11"][1] + graph["g12"][1]
+    r5 = graph["g13"][1] + graph["g14"][1] + graph["g15"][1]
+    r6 = graph["g16"][1] + graph["g17"][1] + graph["g18"][1]
+    r7 = graph["g19"][1] + graph["g20"][1] + graph["g21"][1]
+    r8 = graph["g22"][1] + graph["g23"][1] + graph["g24"][1]
+
+    l1 = graph["g1"][1] + graph["g10"][1] + graph["g22"][1]
+    l2 = graph["g4"][1] + graph["g11"][1] + graph["g19"][1]
+    l3 = graph["g7"][1] + graph["g12"][1] + graph["g16"][1]
+    l4 = graph["g2"][1] + graph["g5"][1] + graph["g8"][1]
+    l5 = graph["g17"][1] + graph["g20"][1] + graph["g23"][1]
+    l6 = graph["g9"][1] + graph["g13"][1] + graph["g18"][1]
+    l7 = graph["g6"][1] + graph["g14"][1]  + graph["g21"][1]
+    l8 = graph["g22"][1] + graph["g15"][1] + graph["g24"][1]
+
+    tmp=[]
+    lst = [r1,r2,r3,r4,r5,r6,r7,r8,l1,l2,l3,l4,l5,l6,l7,l8]
+    #print(lst)
+    for i in lst:
+        if len(i) == 3:
+            #print (i)
+            if i[0] == i[1] and i[1] == i[2] and i[2] == color :
+                tmp.append(i) #we build list of all mills of color.
+                print("710 we got mill", tmp , len(tmp))    
+    return tmp
+
 
 #return tuple of (x,y) of node1
 def getStationXY(node1):
@@ -45,7 +77,7 @@ def findHit(x,y):
          v = (xs-x)**2 + (ys - y)**2
          v = v ** 0.5
          #print(x,y,xs,ys,v)
-         if v < 10:
+         if v < 20:
             print (key)
             return key
      #if we are here we did not find hit - the coin is not at one of 24 stations
@@ -66,21 +98,25 @@ def clearCoinInNode(node1):
     printNodeValue(node1)
     if len(graph[node1][1]) == 1:
         graph[node1][1].pop()
+        graph[node1][3].pop()
     #printNodeValue(node1)
     #no need to return value, in any case value of node1 will be empty
 
-def setCoinInNode(node1, val):
+def setCoinInNode(coin, node1, val):
     #print ("setCoinInNode", node1, val)
     printNodeValue(node1)
     if len(graph[node1][1]) == 0:
         graph[node1][1].append(val)
+        graph[node1][3].append(coin)
         #printNodeValue(node1)
         #printGraph()
         return True
     #it is not possible to set coin on a non empty node
     return False
     
-    
+def getCoinNmbInStation(node1):
+    coin = graph[node1][3][0]
+    return coin
 
 def checkIfConnect(node1, node2):
     if node1 == node2:
@@ -103,7 +139,8 @@ def printGraph():
         print (key, value)
 
 def main():
-    findHit(700,555)
+    station = findHit(245,210)
+    print ("station",station)
     #node1 = 'g1'
     #val = setCoinInNode(node1, Color.BLACK)
     #print (val)
